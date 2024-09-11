@@ -1,0 +1,33 @@
+server:
+  servlet:
+    context-path: "/parent-service"
+  port: 7070
+
+spring:
+  application:
+    name: "Parent"
+
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+
+management:
+  tracing:
+    brave:
+      span-joining-supported: true
+    sampling:
+      probability: 1.0
+    propagation:
+      type: B3_MULTI
+
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
