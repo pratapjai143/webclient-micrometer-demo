@@ -25,12 +25,11 @@ public class WebConfiguration  {
 
     @Bean
     public WebClient webClient() {
-
         final WebClient webClient =  webClientBuilder.baseUrl("http://localhost:6060/child-service")
                 //.defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                //.clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(logRequest())
-                .filter(logResponse()).build();
+                .filter(logResponse())
+                .build();
         return webClient;
     }
 

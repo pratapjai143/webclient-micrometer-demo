@@ -1,5 +1,7 @@
 package com.javahabit.parentservice.controller;
 
+import com.javahabit.parentservice.model.BookRequest;
+import com.javahabit.parentservice.model.BookRequestWrapper;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
@@ -10,10 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -53,6 +60,19 @@ public class ParentController {
                 .contextWrite(context -> context.put(ObservationThreadLocalAccessor.KEY, observation));
     }
 
+    @PostMapping("/parent-web-bulk")
+    public Mono<List<String>> BookShowInBulk(@RequestBody BookRequestWrapper request) {
+        Flux<BookRequest> bookRequestFlux = Flux.fromIterable(request.getBookings());
+
+        return bookRequestFlux.flatMap(booking ->
+                getStringMono(booking)
+        ).collectList();
+    }
+
+    private Mono<String> getStringMono(BookRequest booking) {
+        return webClient.get().uri("/child").retrieve().bodyToMono(String.class);
+    }
+
     @GetMapping("/parent-web")
     @Observed(
             name = "user.name",
@@ -62,7 +82,7 @@ public class ParentController {
     public Mono<String> sayHiParent(){
         log.info("Parent was called ...");
         log.info("Say Hi to Grandchild ...");
-        return webClient.get().uri("/child").retrieve().bodyToMono(String.class).contextCapture();
+        return webClient.get().uri("/child").retrieve().bodyToMono(String.class);
     }
 
     @GetMapping("/parent")
