@@ -12,17 +12,9 @@ logging:
 
 management:
   tracing:
+    brave:
+      span-joining-supported: true
     sampling:
       probability: 1.0
-  endpoints:
-    web:
-      exposure:
-        include: prometheus
-
-
-  metrics:
-    distribution:
-      percentiles-histogram:
-        http:
-          server:
-            requests: true
+    propagation:
+      type: B3_MULTI

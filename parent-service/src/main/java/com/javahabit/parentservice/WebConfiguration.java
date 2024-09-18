@@ -3,6 +3,7 @@ package com.javahabit.parentservice;
 import io.micrometer.tracing.Tracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,19 +36,27 @@ public class WebConfiguration  {
 
     private ExchangeFilterFunction logRequest() {
         return ExchangeFilterFunction.ofRequestProcessor(clinetRequest -> {
+            //MDC.put("spanId", clinetRequest.headers().get("X-B3-SpanId").stream().findFirst().get());
             //log.info("Request {} {}", clinetRequest.method(), clinetRequest.url());
-            log.info("Request trace {}, span {}", this.tracer.currentSpan().context().traceId() , this.tracer.currentSpan().context().spanId());
             //clinetRequest.headers().forEach((name, values) -> values.forEach(value -> log.info("{}={}", name, value)));
-            return Mono.just(clinetRequest);
+            return Mono.defer(() -> {
+                //MDC.put("spanId", clinetRequest.headers().get("X-B3-SpanId").stream().findFirst().get());
+                log.info("Request {} {}", clinetRequest.method(), clinetRequest.url());
+                return Mono.just(clinetRequest);
+            });
+            //return Mono.just(clinetRequest);
         });
     }
 
     private ExchangeFilterFunction logResponse() {
-        return ExchangeFilterFunction.ofResponseProcessor(clinetResponse -> {
-            log.info("Response trace {}, span {}", this.tracer.currentTraceContext().context().traceId() , this.tracer.currentTraceContext().context().spanId());
+        return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
             //log.info("Response status code {} ", clinetResponse.statusCode());
-            //clinetResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{}={}", name, value)));
-            return Mono.just(clinetResponse);
+            return Mono.defer(() -> {
+                //clientResponse.headers().asHttpHeaders().forEach((name, values) -> values.forEach(value -> log.info("{}={}", name, value)));
+                log.info("Response received {} {}");
+                return Mono.just(clientResponse);
+            });
+            //return Mono.just(clientResponse);
         });
     }
 }
